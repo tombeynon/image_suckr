@@ -17,6 +17,27 @@ module ImageSuckr
     end
 
     def get_image_url(params = {})
+      return nil unless results = get_results(params)
+      results[rand(results.count)]["url"]
+    end
+    
+    def get_image_urls(count=20, params={})
+      return nil unless results = get_results(params)
+      index = rand(results.count-count)
+      results[index..(index+count)].map{|r| r["url"] }
+    end
+
+    def get_image_content(params = {})
+      Net::HTTP.get_response(URI.parse(get_image_url(params))).body
+    end
+
+    def get_image_file(params = {})
+      open(URI.parse(get_image_url(params)))
+    end
+    
+    private
+    
+    def get_results(params={})
       params = @default_params.merge(params)
       params["q"] = rand(1000).to_s if params["q"].nil?
 
@@ -27,20 +48,9 @@ module ImageSuckr
       return nil if result.nil?
 
       response_data = result["responseData"]
-      return nil if response_data.nil?
+      return nil if response_data.nil? || response_data["results"].count < 1
 
-      result_size = response_data["results"].count
-      return nil unless result_size > 0
-      result["responseData"]["results"][rand(result_size)]["url"]
+      response_data["results"]
     end
-
-    def get_image_content(params = {})
-      Net::HTTP.get_response(URI.parse(get_image_url(params))).body
-    end
-
-    def get_image_file(params = {})
-      open(URI.parse(get_image_url(params)))
-    end
-
   end
 end
